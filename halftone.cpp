@@ -31,19 +31,6 @@ string samplesYo()
 }
 
 
-
-/*
-// Thresholds
-string thresholdsYo()
-{
-	const string thrshmp[4] = { "c6x6w",
-								"c7x7w",
-								"h8x8o",
-								"h16x16o"};
-	return thrshmp[rand() % 4];
-};
-*/
-
 // Random Resize Values for small dither
 const int reSizeMin = 140;
 const int reSizeMax = 360;
@@ -68,13 +55,7 @@ int main(int argc, char** argv)
 	const fs::path inputDir{ argc >= 2 ? argv[1] : fs::current_path() };
 	fs::path outputDir(argv[2]);
 
-	// Min and Max Gamma adjustment
-	//const double gammaMin = 0.9;
-	//const double gammaMax = 1.2;
-
-
 	// Minimum and Maximum JPEG Compression values
-	// you can change these for sure.
 	const int qMin = 50;
 	const int qMax = 90;
 
@@ -120,11 +101,6 @@ int main(int argc, char** argv)
 
 			uniform_int_distribution<int> seq6(quantMin, quantMax);
 			int randomQuant = seq6(randomNumberGen01);
-
-			// random gamma
-			//uniform_real_distribution<double> seq_01(gammaMin, gammaMax);
-			//double gammaRandom = seq_01(randomNumberGen01);
-
 
 			// Random JPEG quality
 			uniform_int_distribution<int> seq2(qMin, qMax);
@@ -227,8 +203,6 @@ int main(int argc, char** argv)
 
 				// Resize Input Image and adjust gamma in Memory before Splitting
 				if (randomLarge <= poLarge) {
-					//inputReScale.gamma(gammaRandom);
-					//inputReScale.modulate(97, 99, 100);
 					inputReScale.colorSpace(CMYKColorspace);
 					inputReScale.filterType(HanningFilter);
 					inputReScale.resize(randomScalePercentL);
@@ -239,8 +213,6 @@ int main(int argc, char** argv)
 					noiseForDisplaceBlack.resize(randomScalePercentL);
 				}
 				else {
-					//inputReScale.gamma(gammaRandom);
-					//inputReScale.modulate(97, 99, 100);
 					inputReScale.colorSpace(CMYKColorspace);
 					inputReScale.filterType(HanningFilter);
 					inputReScale.resize(randomScalePercent);
