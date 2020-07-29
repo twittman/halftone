@@ -279,6 +279,7 @@ int main(int argc, char** argv)
 
 				if (randomSolid < 100) {
 					cout << "\nSolid Black has been selected for the Image below";
+					cout << endl << inFileNoEXT << " Is being processed with these values: " << endl << "UpScale: " << randomScalePercent << endl;
 				}
 				else {
 					cout << endl << inFileNoEXT << " Is being processed with these values: " << endl << "UpScale: " << randomScalePercent << endl;
@@ -316,7 +317,7 @@ int main(int argc, char** argv)
 				case_One;
 				inputCyan.artifact("compose:args", artARG);
 				inputCyan.composite(noiseForDisplaceCyan, 0, 0, DisplaceCompositeOp);
-				inputCyan.write("_cyan.png");
+				//inputCyan.write("_cyan.png");
 
 				// Output Magenta Dithered Image
 				inputMagenta.addNoise(GaussianNoise, 0.13);
@@ -324,7 +325,7 @@ int main(int argc, char** argv)
 				case_One;
 				inputMagenta.artifact("compose:args", artARG);
 				inputMagenta.composite(noiseForDisplaceMagenta, 0, 0, DisplaceCompositeOp);
-				inputMagenta.write("_Magenta.png");
+				//inputMagenta.write("_Magenta.png");
 
 				// Output Yellow Dithered Image
 				inputYellow.addNoise(GaussianNoise, 0.12);
@@ -332,7 +333,7 @@ int main(int argc, char** argv)
 				case_One;
 				inputYellow.artifact("compose:args", artARG);
 				inputYellow.composite(noiseForDisplaceYellow, 0, 0, DisplaceCompositeOp);
-				inputYellow.write("_Yellow.png");
+				//inputYellow.write("_Yellow.png");
 
 				// Output Black Dithered/solid Image
 				if (randomSolid < 100) {
@@ -366,7 +367,7 @@ int main(int argc, char** argv)
 					inputBlack.artifact("compose:args", artARG);
 					inputBlack.composite(noiseForDisplaceBlack, 0, 0, DisplaceCompositeOp);
 				}
-				inputBlack.write("_Black.png");
+				//inputBlack.write("_Black.png");
 
 				// Output Combined Channels to single Colour Image
 				std::vector<Image> imageList;
