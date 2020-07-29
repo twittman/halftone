@@ -16,7 +16,7 @@ int whichAnglesYo()
 	const int anglesList[4] = {  1,
 								 2,
 								 3,
-								 4 };
+								 4  };
 	return anglesList[rand() % 4];
 }
 
@@ -30,8 +30,6 @@ string samplesYo()
 									"4:4:4" };
 	return samplesList[rand() % 6];
 }
-
-
 
 double magentaArgsFirst[2];
 double magentaArgsSecond[2];
@@ -70,13 +68,7 @@ int main(int argc, char** argv)
 	const fs::path inputDir{ argc >= 2 ? argv[1] : fs::current_path() };
 	fs::path outputDir(argv[2]);
 
-	// Min and Max Gamma adjustment
-	//const double gammaMin = 0.9;
-	//const double gammaMax = 1.2;
-
-
 	// Minimum and Maximum JPEG Compression values
-	// you can change these for sure.
 	const int qMin = 50;
 	const int qMax = 90;
 
@@ -123,11 +115,6 @@ int main(int argc, char** argv)
 			uniform_int_distribution<int> seq6(quantMin, quantMax);
 			int randomQuant = seq6(randomNumberGen01);
 
-			// random gamma
-			//uniform_real_distribution<double> seq_01(gammaMin, gammaMax);
-			//double gammaRandom = seq_01(randomNumberGen01);
-
-
 			// Random JPEG quality
 			uniform_int_distribution<int> seq2(qMin, qMax);
 			int qJpeg = seq2(randomNumberGen01);
@@ -157,10 +144,6 @@ int main(int argc, char** argv)
 			uniform_real_distribution<double> sequence03(finalGrainMin, finalGrainMax);
 			double finalGrain = sequence03(randomNumberGen01);
 
-			//string ditherType;
-			
-
-
 			try {
 				InitializeMagick(*argv);
 				// Read Original Image file
@@ -187,7 +170,6 @@ int main(int argc, char** argv)
 				// Generate Noise Map for Displace PER CHANNEL
 				/////////////////////////////////////////////////
 				string noiseSize = to_string(width) + "x" + to_string(height);
-				cout << "original Resolution: " << noiseSize << endl;
 
 				Image noiseForDisplaceCyan(Geometry(noiseSize), "gray"), noiseForDisplaceMagenta(Geometry(noiseSize), "gray"), noiseForDisplaceYellow(Geometry(noiseSize), "gray"), noiseForDisplaceBlack(Geometry(noiseSize), "gray");
 
@@ -221,8 +203,6 @@ int main(int argc, char** argv)
 
 				// Resize Input Image and adjust gamma in Memory before Splitting
 				if (randomLarge <= poLarge) {
-					//inputReScale.gamma(gammaRandom);
-					//inputReScale.modulate(97, 99, 100);
 					inputReScale.colorSpace(CMYKColorspace);
 					inputReScale.filterType(HanningFilter);
 					inputReScale.resize(randomScalePercentL);
@@ -233,8 +213,6 @@ int main(int argc, char** argv)
 					noiseForDisplaceBlack.resize(randomScalePercentL);
 				}
 				else {
-					//inputReScale.gamma(gammaRandom);
-					//inputReScale.modulate(97, 99, 100);
 					inputReScale.colorSpace(CMYKColorspace);
 					inputReScale.filterType(HanningFilter);
 					inputReScale.resize(randomScalePercent);
@@ -277,35 +255,25 @@ int main(int argc, char** argv)
 					forPrint = "h8x8o dither selected";
 				}
 
-				if (randomSolid < 100) {
-					cout << "\nSolid Black has been selected for the Image below";
-					cout << endl << inFileNoEXT << " Is being processed with these values: " << endl << "UpScale: " << randomScalePercent << endl;
-				}
-				else {
-					cout << endl << inFileNoEXT << " Is being processed with these values: " << endl << "UpScale: " << randomScalePercent << endl;
-				}
+				cout << endl << inFileNoEXT << " Is being processed with these values: " << endl << "UpScale: " << randomScalePercent << endl;
 
 				switch (whichAnglesYo())
 				{
 				case 1:
 					// One	
 					case_One(inputCyan, inputMagenta, inputYellow, inputBlack, 15, 75, 0, 45, ditherSize, cropThis);
-					cout << "\nDither angles #1" << endl;
 					break;
 				case 2:
 					// Two
 					case_One(inputCyan, inputMagenta, inputYellow, inputBlack, 105, 75, 90, 15, ditherSize, cropThis);
-					cout << "\nDither angles #2" << endl;
 					break;
 				case 3:
 					// Three
 					case_One(inputCyan, inputMagenta, inputYellow, inputBlack, 15, 45, 0, 75, ditherSize, cropThis);
-					cout << "\nDither angles #3" << endl;
 					break;
 				case 4:
 					// Four
 					case_One(inputCyan, inputMagenta, inputYellow, inputBlack, 165, 45, 90, 105, ditherSize, cropThis);
-					cout << "\nDither angles #4" << endl;
 					break;
 				}
 
@@ -381,8 +349,7 @@ int main(int argc, char** argv)
 				Magick::combineImages(&rComposite, imageList.begin(), imageList.end(), AllChannels, CMYKColorspace);
 
 				if (randomSolid <= poJPG) {
-					cout << inFileEXT << endl << "Quantized: " << randomQuant << endl << " and compressed " << endl;
-					cout << inFileEXT << endl << "has been processed and compressed " << endl;
+					cout << inFileEXT << endl << "Quantized: " << randomQuant << endl << "and compressed " << endl;
 					rComposite.gaussianBlur(0, randomFinalBlur);
 					rComposite.filterType(CubicFilter);
 					rComposite.resize(noiseSize);
@@ -391,8 +358,6 @@ int main(int argc, char** argv)
 					rComposite.quantizeDither(false);
 					rComposite.quantizeColors(randomQuant);
 					rComposite.quantize(true);
-					//////////////////////////////////////////////////////////////////////////////    rComposite.artifact("compose:args", artARG);
-					//////////////////////////////////////////////////////////////////////////////    rComposite.composite(noiseForDisplace, 0, 0, DisplaceCompositeOp);
 					rComposite.defineValue("JPEG", "sampling-factor", samplesYo());
 					rComposite.quality(qJpeg);
 					rComposite.magick("JPEG");
@@ -404,8 +369,6 @@ int main(int argc, char** argv)
 					rComposite.resize(noiseSize);
 					rComposite.colorSpace(sRGBColorspace);
 					rComposite.addNoise(LaplacianNoise, finalGrain);
-					/////////////////////////////////////////////////////////////////////////////    rComposite.artifact("compose:args", artARG);
-					/////////////////////////////////////////////////////////////////////////////    rComposite.composite(noiseForDisplace, 0, 0, DisplaceCompositeOp);
 					rComposite.write(outFile);
 				}
 			}
@@ -419,9 +382,7 @@ int main(int argc, char** argv)
 	}
 }
 
-
-
-void case_One(Image& inputCyan, Image& inputMagenta, Image& inputBlack, Image& inputYellow, \
+void case_One(Image& inputCyan, Image& inputMagenta, Image& inputYellow, Image& inputBlack, \
 	double c, double m, double y, double b, string& ditherTypeThingy, \
 	string& croppingThing)
 {
@@ -434,7 +395,7 @@ void case_One(Image& inputCyan, Image& inputMagenta, Image& inputBlack, Image& i
 	double blackArgsFirst[2] = { b,1 };
 	double blackArgsSecond[2] = { -b,1 };
 
-	cout << "Dither type: " << ditherTypeThingy << endl;
+	//cout << "Dither type: " << ditherTypeThingy << endl;
 
 	// Cyan
 	inputCyan.distort(ScaleRotateTranslateDistortion, 1, cyanArgsFirst, Magick::MagickTrue);
