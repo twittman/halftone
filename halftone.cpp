@@ -1,5 +1,6 @@
 #include <Magick++.h>
 #include <cxxopts.hpp>
+#include <chrono>
 #include <sstream>
 #include <iostream>
 #include <cstdlib>
@@ -8,17 +9,26 @@
 #include <filesystem>
 
 
+
 using namespace std;
 using namespace Magick;
-namespace fs = filesystem;
+using namespace filesystem;
 
 int whichAnglesYo()
 {
 	const int anglesList[4] = { 1,
-								 2,
-								 3,
-								 4 };
+								2,
+								3,
+								4 };
 	return anglesList[rand() % 4];
+}
+
+int whichDotsYo()
+{
+	const int dotsList[3] = { 1,
+							  2,
+							  3	};
+	return dotsList[rand() % 3];
 }
 
 string samplesYo()
@@ -41,31 +51,29 @@ double cyanArgsSecond[2];
 double yellowArgsFirst[2];
 double yellowArgsSecond[2];
 
-
 void case_One(Image& inputCyan, Image& inputMagenta, Image& inputBlack, Image& inputYellow, \
 	double c, double m, double y, double b, \
 	string& ditherTypeThingy, string& croppingThing, float& solidPercent, int& randomNumber);
-
+void dotsFunc(int DPI, int& dotsOfHalftone);
+void Black_solid_dithered(int randomNumber, float solidPercent, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& inputBlack, Magick::Image& noiseForDisplaceBlack);
+void Jpeg_compression(int noise, int randomNumber, int poJPG, std::string& inFileEXT, int randomQuant, Magick::Image& rComposite, double randomFinalBlur, std::string& noiseSize, float solidPercent, Magick::Image& solidBlackImage, double finalGrain, int qJpeg, std::string& outFile);
+void Dither_and_combine_channels(int noise, Magick::Image& inputCyan, Magick::Image& inputMagenta, Magick::Image& inputYellow, Magick::Image& inputBlack, std::vector<int>& anglesNum, std::string& ditherSize, std::string& cropChannelsNew, float& solidPercent, int& randomNumber, Magick::Image& noiseForDisplaceCyan, Magick::Image& noiseForDisplaceMagenta, Magick::Image& noiseForDisplaceYellow, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& noiseForDisplaceBlack, int poJPG, std::string& inFileEXT, int randomQuant, double randomFinalBlur, double finalGrain, int qJpeg, std::string& outFile);
+void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::filesystem::path& outputDir, const int& quantMin, const int& quantMax, const int& qMin, const int& qMax, char** argv, int DPI, int angle, float& solidPercent, float poLarge, int poJPG);
+//void min_max_DPI(int DPI, double& maxDPI, double& minDPI, double& maxNumc6x6w, double& minNumc6x6w, double& maxNumMultiplier, int& dotsOfHalftone);
 void anglesFunc(int angle, int& angle_of_halftone);
 
-void largeSmall(int randomNumber, float poLarge, int randomNumberFour, std::string& ditherSize, std::string& cropThis, std::string& cropChannelsNewL, std::string& forPrint, std::string& cropChannelsNew);
 
-// Random Resize Values for small dither
-//const int reSizeMin = 120;
-//const int reSizeMax = 300;
-
-// Random Resize Values for large dither
-//const int reSizeMinL = 180;
-//const int reSizeMaxL = 330;
+void print(std::vector<int> const& anglesLaser)
+{
+	std::copy(anglesLaser.begin(), anglesLaser.end(), std::ostream_iterator<int>(cout, " "));
+}
 
 // Random Final Blur
-const double finalBlurMin = 0.24;
-const double finalBlurMax = 0.76;
+const double finalBlurMin = 0.68;
+const double finalBlurMax = 1.66;
 
-const double finalGrainMin = 0.05;
-const double finalGrainMax = 0.40;
-
-// Make random scales user addressable
+const double finalGrainMin = 0.07;
+const double finalGrainMax = 0.23;
 
 
 // Main Function
@@ -76,11 +84,12 @@ int main(int argc, char** argv)
 	options.add_options()
 		("i,input", "input directory", cxxopts::value<std::string>())
 		("o,output", "output directory", cxxopts::value<std::string>())
-		("a,angle", "Angle of Halftone Dots 1 - 4, 0 for random", cxxopts::value<int>()->default_value("0"))
-		("l,large", "Percentage of larger dither pattern", cxxopts::value<float>()->default_value("0.05"))
+		("n,noise", "Add noise, 1 = yes, 0 = no", cxxopts::value<int>()->default_value("1"))
+		("a,angle", "Angle of Halftone Dots 1 - 5, 0 for random", cxxopts::value<int>()->default_value("0"))
 		("j,jpeg", "Percentage of Jpeg", cxxopts::value<float>()->default_value("0.05"))
 		("s,solid", "Do you want the outlines to be solid?", cxxopts::value<float>()->default_value("0.5"))
-		("g,scale", "Scale multiplier", cxxopts::value<float>()->default_value("1.0"))
+		("g,DPI", "DPI, 1 = 600 DPI, 2 = 900 DPI, 3 = 1200 DPI, 4 = 4800 DPI", cxxopts::value<int>()->default_value("1"))
+		("b,angles", "print angles")
 		("h,help", "print help")
 		;
 
@@ -91,20 +100,34 @@ int main(int argc, char** argv)
 		cout << options.help() << endl;
 		exit(0);
 	}
+	if (result.count("angles"))
+	{
+		cout << "1 = Cyan:15, Magenta:75, Yellow:0, Black:45" << endl;
+		cout << "2 = Cyan:105, Magenta:75, Yellow:90, Black:15" << endl;
+		cout << "3 = Cyan:15, Magenta:45, Yellow:0, Black:75" << endl;
+		cout << "4 = Cyan:165, Magenta:45, Yellow:90, Black:105" << endl;
+		cout << "5 = Cyan:95, Magenta:65, Yellow:15, Black:35" << endl;
+		exit(0);
+	}
+
 
 	string input;
 	string output;
+	int noise = 1;
 	int angle = 0;
 	float large = 0.05;
 	float jpeg = 0.05;
 	float solid = 0.5;
-	float scale = 1.0;
+	int DPI = 1;
 
 	if (result.count("input"))
 		input = result["input"].as<std::string>();
 
 	if (result.count("output"))
 		output = result["output"].as<std::string>();
+
+	if (result.count("noise"))
+		noise = result["noise"].as<int>();
 
 	if (result.count("angle"))
 		angle = result["angle"].as<int>();
@@ -118,28 +141,18 @@ int main(int argc, char** argv)
 	if (result.count("solid"))
 		solid = result["solid"].as<float>();
 
-	if (result.count("scale"))
-		scale = result["scale"].as<float>();
-
-	float reSizeScale = scale * 100;
-
-	float reSizeMin = reSizeScale * 1.16;
-	float reSizeMax = reSizeMin * 1.22;
-
-	float reSizeMinL = reSizeScale * 1.90;
-	float reSizeMaxL = reSizeMin * 2.20;
+	if (result.count("DPI"))
+		DPI = result["DPI"].as<int>();
 
 	//bool solid = result["solid"].as<bool>();
 
-
 	srand(time(NULL));
-	//const fs::path inputDir{ argc >= 2 ? argv[1] : fs::current_path() };
-	fs::path inputDir(input);
-	fs::path outputDir(output);
+	filesystem::path inputDir(input);
+	filesystem::path outputDir(output);
 
 	// Minimum and Maximum JPEG Compression values
 	const int qMin = 50;
-	const int qMax = 90;
+	const int qMax = 94;
 
 	// Minimum and Maximum number of colours for Quantize
 	const int quantMin = 8;
@@ -147,25 +160,27 @@ int main(int argc, char** argv)
 
 	// Percentage of JPEG
 	// Eg: 0.1 = 10% chance of jpeg
-	//int poJPG = 200 * stod(argv[3]);
 	int poJPG = 200 * jpeg;
 
 	// Percentage of larger dither
 	// Eg: 0.02 = 2% chance of larger dither
-	//int poLarge = 400 * stod(argv[4]);
 	float poLarge = 200 * large;
 
 	float solidPercent = 200 * solid;
 
-
-	if (fs::create_directory(outputDir)) {
+	if (filesystem::create_directory(outputDir)) {
 		cout << "Output Directory has been created" << endl;
 	}
-	for (const auto& entry : fs::directory_iterator(inputDir)) {
+	Halftone_Function_Main(noise, inputDir, outputDir, quantMin, quantMax, qMin, qMax, argv, DPI, angle, solidPercent, poLarge, poJPG);
+}
+
+void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::filesystem::path& outputDir, const int& quantMin, const int& quantMax, const int& qMin, const int& qMax, char** argv, int DPI, int angle, float& solidPercent, float poLarge, int poJPG)
+{
+	for (const auto& entry : filesystem::directory_iterator(inputDir)) {
 		if (is_regular_file(entry.path()))
 		{
 			// Get Input Directory
-			fs::path inputFile(inputDir);
+			filesystem::path inputFile(inputDir);
 
 			// Get Filename with Extension
 			string inFileEXT = entry.path().string();
@@ -181,7 +196,6 @@ int main(int argc, char** argv)
 			string outFileDir = outputDir.string();
 			string outFile = outFileDir + '\\' + fileNoPathEXT;
 
-
 			random_device ranDev;
 			mt19937 randomNumberGen01(ranDev());
 
@@ -192,33 +206,52 @@ int main(int argc, char** argv)
 			uniform_int_distribution<int> seq2(qMin, qMax);
 			int qJpeg = seq2(randomNumberGen01);
 
-			// small dither resize
-			uniform_int_distribution<int> sequence01(reSizeMin, reSizeMax);
-			int randomScale = sequence01(randomNumberGen01);
-			string randomScalePercent = to_string(randomScale) + "%";
-
-			// large dither resize
-			uniform_int_distribution<int> sequence010(reSizeMinL, reSizeMaxL);
-			int randomScaleL = sequence010(randomNumberGen01);
-			string randomScalePercentL = to_string(randomScaleL) + "%";
-
-
-			uniform_int_distribution<int> sequence_large(1, 400);
-			int randomLarge = sequence_large(randomNumberGen01);
-
+			// Chance of Solid black channel
 			uniform_int_distribution<int> sequence_solid(1, 200);
 			int randomNumber = sequence_solid(randomNumberGen01);
 			string percentage_Solid = to_string(randomNumber);
 
-			uniform_int_distribution<int> sequence_three(0, 3);
-			int randomNumberFour = sequence_three(randomNumberGen01);
-
+			// Random blur
 			uniform_real_distribution<double> sequence02(finalBlurMin, finalBlurMax);
 			double randomBlurScale = sequence02(randomNumberGen01);
 			double randomFinalBlur = randomBlurScale;
 
+			// Random grain
 			uniform_real_distribution<double> sequence03(finalGrainMin, finalGrainMax);
 			double finalGrain = sequence03(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_01(127, 137);
+			int six_Hundred_Scaler = dpiScale_01(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_02(145, 155);
+			int nine_Hundred_Scaler = dpiScale_02(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_03(200, 220);
+			int twelve_Hundred_Scaler = dpiScale_03(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_04( 170, 180 );
+			int fortyEight_Hundred_Scaler = dpiScale_04( randomNumberGen01 );
+
+
+			/// RANDOMISED LASERSCHWERT ANGLES BY 10% ///
+			uniform_int_distribution<int> one_angle(92, 97);
+			int angle_first = one_angle(randomNumberGen01);
+
+			uniform_int_distribution<int> two_angle(62, 67);
+			int angle_second = two_angle(randomNumberGen01);
+
+			uniform_int_distribution<int> three_angle(12, 17);
+			int angle_third = three_angle(randomNumberGen01);
+
+			uniform_int_distribution<int> four_angle(32, 37);
+			int angle_fourth = four_angle(randomNumberGen01);
+
+			vector<int> anglesLaser;
+			anglesLaser.push_back(angle_first);
+			anglesLaser.push_back(angle_second);
+			anglesLaser.push_back(angle_third);
+			anglesLaser.push_back(angle_fourth);
+
 
 			try {
 				InitializeMagick(*argv);
@@ -230,16 +263,43 @@ int main(int argc, char** argv)
 				size_t width = inputReScale.baseColumns();
 				size_t height = inputReScale.baseRows();
 
+				auto DPI_scaler = 0;
+
+				int dotsOfHalftone = DPI;
+				dotsFunc(DPI, dotsOfHalftone);
+				string dotsNum;
+				switch (dotsOfHalftone)
+				{
+				case 1:
+					dotsNum = "c5x5w";
+					DPI_scaler = six_Hundred_Scaler;
+					cout << "\nHalftone Dot Pattern: c5x5w " << endl;
+					break;
+				case 2:
+					dotsNum = "h8x8o";
+					DPI_scaler = nine_Hundred_Scaler;
+					cout << "\nHalftone Dot Pattern: h8x8o " << endl;
+					break;
+				case 3:
+					dotsNum = "h16x16o";
+					DPI_scaler = twelve_Hundred_Scaler;
+					cout << "\nHalftone Dot Pattern: h16x16o " << endl;
+					break;
+				case 4:
+					dotsNum = "c21x21w";
+					DPI_scaler = fortyEight_Hundred_Scaler;
+					cout << "\nHalftone Dot Pattern: c21x21w " << endl;
+					break;
+				}
+				
+				string DPI_scaler_percent = to_string(DPI_scaler) + "%";
+
+
 				// Calculate size of Crop after Upscale and Distort
-				double widthPercent = width * stoi(randomScalePercent) / 100;
-				double heightPercent = height * stoi(randomScalePercent) / 100;
+				int widthPercent = width * DPI_scaler / 100;
+				int heightPercent = height * DPI_scaler / 100;
 				string cropChannelsNew = to_string(widthPercent) + "x" + to_string(heightPercent);
-
-				// Calculate size of Crop after Upscale and Distort
-				double widthPercentL = width * stoi(randomScalePercentL) / 100;
-				double heightPercentL = height * stoi(randomScalePercentL) / 100;
-				string cropChannelsNewL = to_string(widthPercentL) + "x" + to_string(heightPercentL);
-
+				//cout << cropChannelsNew << endl;
 
 
 				/////////////////////////////////////////////////
@@ -253,51 +313,39 @@ int main(int argc, char** argv)
 				noiseForDisplaceCyan.addNoise(GaussianNoise);
 				noiseForDisplaceCyan.colorSpace(GRAYColorspace);
 				noiseForDisplaceCyan.linearStretch(QuantumRange / 0.26, QuantumRange / 0.26);
-				noiseForDisplaceCyan.gaussianBlur(0, 0.9);
+				noiseForDisplaceCyan.blur(0, 0.9);
 
 
 				noiseForDisplaceMagenta.colorSpace(sRGBColorspace);
 				noiseForDisplaceMagenta.addNoise(GaussianNoise);
 				noiseForDisplaceMagenta.colorSpace(GRAYColorspace);
 				noiseForDisplaceMagenta.linearStretch(QuantumRange / 0.26, QuantumRange / 0.26);
-				noiseForDisplaceMagenta.gaussianBlur(0, 0.86);
+				noiseForDisplaceMagenta.blur(0, 0.86);
 
 
 				noiseForDisplaceYellow.colorSpace(sRGBColorspace);
 				noiseForDisplaceYellow.addNoise(GaussianNoise);
 				noiseForDisplaceYellow.colorSpace(GRAYColorspace);
 				noiseForDisplaceYellow.linearStretch(QuantumRange / 0.26, QuantumRange / 0.26);
-				noiseForDisplaceYellow.gaussianBlur(0, 1.0);
+				noiseForDisplaceYellow.blur(0, 1.0);
 
 
 				noiseForDisplaceBlack.colorSpace(sRGBColorspace);
 				noiseForDisplaceBlack.addNoise(GaussianNoise);
 				noiseForDisplaceBlack.colorSpace(GRAYColorspace);
 				noiseForDisplaceBlack.linearStretch(QuantumRange / 0.26, QuantumRange / 0.26);
-				noiseForDisplaceBlack.gaussianBlur(0, 1.2);
+				noiseForDisplaceBlack.blur(0, 1.2);
 
 
 				// Resize Input Image and adjust gamma in Memory before Splitting
-				if (randomNumber <= poLarge) {
-					inputReScale.colorSpace(CMYKColorspace);
-					inputReScale.filterType(HanningFilter);
-					inputReScale.resize(randomScalePercentL);
-					inputReScale.gaussianBlur(0, 1.0);
-					noiseForDisplaceCyan.resize(randomScalePercentL);
-					noiseForDisplaceMagenta.resize(randomScalePercentL);
-					noiseForDisplaceYellow.resize(randomScalePercentL);
-					noiseForDisplaceBlack.resize(randomScalePercentL);
-				}
-				else {
-					inputReScale.colorSpace(CMYKColorspace);
-					inputReScale.filterType(HanningFilter);
-					inputReScale.resize(randomScalePercent);
-					inputReScale.gaussianBlur(0, 0.7);
-					noiseForDisplaceCyan.resize(randomScalePercent);
-					noiseForDisplaceMagenta.resize(randomScalePercent);
-					noiseForDisplaceYellow.resize(randomScalePercent);
-					noiseForDisplaceBlack.resize(randomScalePercent);
-				}
+				inputReScale.colorSpace(CMYKColorspace);
+				inputReScale.filterType(HanningFilter);
+				inputReScale.resize(DPI_scaler_percent);
+				inputReScale.gaussianBlur(0, 0.6);
+				noiseForDisplaceCyan.resize(DPI_scaler_percent);
+				noiseForDisplaceMagenta.resize(DPI_scaler_percent);
+				noiseForDisplaceYellow.resize(DPI_scaler_percent);
+				noiseForDisplaceBlack.resize(DPI_scaler_percent);
 
 				//noiseForDisplaceCyan.write("_Noise_Cyan.png");
 				//noiseForDisplaceMagenta.write("_Noise_Magenta.png");
@@ -316,176 +364,57 @@ int main(int argc, char** argv)
 				inputBlack = inputReScale;
 				inputBlack.channel(BlackChannel);
 
-				string ditherSize;
+				string ditherSize = dotsNum;
 				string cropThis;
 				string forPrint;
 
-				largeSmall(randomNumber, poLarge, randomNumberFour, ditherSize, cropThis, cropChannelsNewL, forPrint, cropChannelsNew);
-				//cout << "Random number: " << randomNumber << endl;
-				//cout << "Percentage of Large: " << poLarge << endl;
-
-				cout << endl << inFileNoEXT << " Is being processed with these values: " << endl << forPrint << endl << "UpScale: " << randomScalePercent << endl;
-
-				/*switch (whichAnglesYo())
-				{
-				case 1:
-					// One
-					case_One(inputCyan, inputMagenta, inputYellow, inputBlack, 15, 75, 0, 45, ditherSize, cropThis, solidPercent, randomNumber);
-					break;
-				case 2:
-					// Two
-					case_One(inputCyan, inputMagenta, inputYellow, inputBlack, 105, 75, 90, 15, ditherSize, cropThis, solidPercent, randomNumber);
-					break;
-				case 3:
-					// Three
-					case_One(inputCyan, inputMagenta, inputYellow, inputBlack, 15, 45, 0, 75, ditherSize, cropThis, solidPercent, randomNumber);
-					break;
-				case 4:
-					// Four
-					case_One(inputCyan, inputMagenta, inputYellow, inputBlack, 165, 45, 90, 105, ditherSize, cropThis, solidPercent, randomNumber);
-					break;
-				}*/
+				cout << inFileNoEXT << " Is being processed: " << endl << "UpScale: " << DPI_scaler_percent << endl;
 
 				int angle_of_halftone = 1;
-
 				anglesFunc(angle, angle_of_halftone);
-
 				vector<int> anglesNum;
 				switch (angle_of_halftone)
 				{
 				case 1:
 					anglesNum = { 15, 75, 0, 45 };
-					cout << "Angles number one" << endl;;
+					cout << "Angles number One: ";
+					print(anglesNum);
+					cout << endl;
 					break;
 				case 2:
 					anglesNum = { 105, 75, 90, 15 };
-					cout << "Angles number two" << endl;;
+					cout << "Angles number Two: ";
+					print(anglesNum);
+					cout << endl;
 					break;
 				case 3:
 					anglesNum = { 15, 45, 0, 75 };
-					cout << "Angles number three" << endl;;
+					cout << "Angles number Three: ";
+					print(anglesNum);
+					cout << endl;
 					break;
 				case 4:
 					anglesNum = { 165, 45, 90, 105 };
-					cout << "Angles number four" << endl;;
+					cout << "Angles number Four: ";
+					print(anglesNum);
+					cout << endl;
 					break;
+				case 5:
+					anglesNum = anglesLaser;
+					cout << "Angles number Laser: ";
+					print(anglesNum);
+					cout << endl;
 				}
 
-				string artARG = "2x2";
 
-				// Output Cyan Dithered Image
-				inputCyan.addNoise(GaussianNoise, 0.15);
-				inputCyan.modulate(100, 0, 100);
-				case_One(inputCyan, inputMagenta, inputYellow, inputBlack, anglesNum[0], anglesNum[1], anglesNum[2], anglesNum[4], ditherSize, cropThis, solidPercent, randomNumber);
-				inputCyan.artifact("compose:args", artARG);
-				inputCyan.composite(noiseForDisplaceCyan, 0, 0, DisplaceCompositeOp);
-				//inputCyan.write("_cyan.png");
+				auto t1 = std::chrono::high_resolution_clock::now();
+				Dither_and_combine_channels(noise, inputCyan, inputMagenta, inputYellow, inputBlack, anglesNum, ditherSize, cropChannelsNew, solidPercent, randomNumber, noiseForDisplaceCyan, noiseForDisplaceMagenta, noiseForDisplaceYellow, blackLines, inputReScale, poLarge, noiseSize, solidBlackImage, noiseForDisplaceBlack, poJPG, inFileEXT, randomQuant, randomFinalBlur, finalGrain, qJpeg, outFile);
+				auto t2 = std::chrono::high_resolution_clock::now();
 
-				// Output Magenta Dithered Image
-				inputMagenta.addNoise(GaussianNoise, 0.13);
-				inputMagenta.modulate(100, 0, 100);
-				//case_One(inputCyan, inputMagenta, inputYellow, inputBlack, anglesNum[1], anglesNum[2], anglesNum[3], anglesNum[4], ditherSize, cropThis, solidPercent, randomNumber);
-				inputMagenta.artifact("compose:args", artARG);
-				inputMagenta.composite(noiseForDisplaceMagenta, 0, 0, DisplaceCompositeOp);
-				//inputMagenta.write("_Magenta.png");
+				auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+				cout << "Time taken for this image: " << duration / 1000.0 << " seconds" << "\n" << endl;
 
-				// Output Yellow Dithered Image
-				inputYellow.addNoise(GaussianNoise, 0.12);
-				inputYellow.modulate(100, 0, 100);
-				//case_One(inputCyan, inputMagenta, inputYellow, inputBlack, anglesNum[1], anglesNum[2], anglesNum[3], anglesNum[4], ditherSize, cropThis, solidPercent, randomNumber);
-				inputYellow.artifact("compose:args", artARG);
-				inputYellow.composite(noiseForDisplaceYellow, 0, 0, DisplaceCompositeOp);
-				//inputYellow.write("_Yellow.png");
 
-				// Output Black Dithered/solid Image
-				if (randomNumber <= solidPercent) {
-					string artARG = "2x2";
-
-					// Get black channel and find the edges
-					blackLines = inputReScale;
-					blackLines.channel(BlackChannel);
-					blackLines.sharpen(0.6, 1.0);
-					blackLines.morphology(ConvolveMorphology, DoGKernel, "6,1,4");
-
-					if (randomNumber <= poLarge) {
-						blackLines.morphology(DilateMorphology, DiamondKernel, "1x3");
-					}
-					else {
-						blackLines.morphology(ErodeMorphology, DiamondKernel, "1x2");
-					}
-
-					blackLines.colorSpace(GRAYColorspace);
-					blackLines.linearStretch(QuantumRange, QuantumRange);
-					blackLines.resize(noiseSize);
-					solidBlackImage.composite(blackLines, 0, 0, CopyAlphaCompositeOp);
-					solidBlackImage.colorSpace(sRGBColorspace);
-
-					inputBlack.addNoise(GaussianNoise, 0.09);
-					inputBlack.modulate(100, 0, 100);
-					inputBlack.artifact("compose:args", artARG);
-					inputBlack.composite(noiseForDisplaceBlack, 0, 0, DisplaceCompositeOp);
-				}
-				else {
-					string artARG = "2x2";
-					inputBlack.addNoise(GaussianNoise, 0.09);
-					inputBlack.modulate(100, 0, 100);
-					//case_One(inputCyan, inputMagenta, inputYellow, inputBlack, anglesNum[1], anglesNum[2], anglesNum[3], anglesNum[4], ditherSize, cropThis, solidPercent, randomNumber);
-					inputBlack.artifact("compose:args", artARG);
-					inputBlack.composite(noiseForDisplaceBlack, 0, 0, DisplaceCompositeOp);
-				}
-
-				// Output Combined Channels to single Colour Image
-				std::vector<Image> imageList;
-				imageList.push_back(inputCyan);
-				imageList.push_back(inputMagenta);
-				imageList.push_back(inputYellow);
-				imageList.push_back(inputBlack);
-
-				//////////////////////////////////////////////////////////////////////////////////// string artARG = "2x2";
-				Image rComposite;
-				Magick::combineImages(&rComposite, imageList.begin(), imageList.end(), AllChannels, CMYKColorspace);
-
-				if (randomNumber <= poJPG) {
-					cout << inFileEXT << endl << "Quantized: " << randomQuant << endl << "and compressed " << endl;
-					rComposite.gaussianBlur(0, randomFinalBlur);
-					rComposite.filterType(CubicFilter);
-					rComposite.resize(noiseSize);
-					rComposite.colorSpace(sRGBColorspace);
-
-					if (randomNumber <= solidPercent) {
-						rComposite.alpha(false);
-						rComposite.composite(solidBlackImage, 0, 0, OverCompositeOp);
-					}
-					else {
-
-					}
-
-					rComposite.addNoise(LaplacianNoise, finalGrain);
-					rComposite.quantizeDither(false);
-					rComposite.quantizeColors(randomQuant);
-					rComposite.quantize(true);
-					rComposite.defineValue("JPEG", "sampling-factor", samplesYo());
-					rComposite.quality(qJpeg);
-					rComposite.magick("JPEG");
-					rComposite.write(outFile);
-				}
-				else {
-					rComposite.gaussianBlur(0, randomFinalBlur);
-					rComposite.filterType(CubicFilter);
-					rComposite.resize(noiseSize);
-					rComposite.colorSpace(sRGBColorspace);
-
-					if (randomNumber <= solidPercent) {
-						rComposite.alpha(false);
-						rComposite.composite(solidBlackImage, 0, 0, OverCompositeOp);
-					}
-					else {
-
-					}
-
-					rComposite.addNoise(LaplacianNoise, finalGrain);
-					rComposite.write(outFile);
-				}
 			}
 			catch (Exception& error_)
 			{
@@ -497,33 +426,171 @@ int main(int argc, char** argv)
 	}
 }
 
-void largeSmall(int randomNumber, float poLarge, int randomNumberFour, std::string& ditherSize, std::string& cropThis, std::string& cropChannelsNewL, std::string& forPrint, std::string& cropChannelsNew)
+void Dither_and_combine_channels(int noise, Magick::Image& inputCyan, Magick::Image& inputMagenta, Magick::Image& inputYellow, Magick::Image& inputBlack, std::vector<int>& anglesNum, std::string& ditherSize, std::string& cropChannelsNew, float& solidPercent, int& randomNumber, Magick::Image& noiseForDisplaceCyan, Magick::Image& noiseForDisplaceMagenta, Magick::Image& noiseForDisplaceYellow, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& noiseForDisplaceBlack, int poJPG, std::string& inFileEXT, int randomQuant, double randomFinalBlur, double finalGrain, int qJpeg, std::string& outFile)
 {
-	if (randomNumber <= poLarge) {
-		if (randomNumberFour <= 1) {
-			ditherSize = "c21x21w";
-			cropThis = cropChannelsNewL;
-			forPrint = "c21x21w dither selected";
-		}
-		else {
-			ditherSize = "h16x16o";
-			cropThis = cropChannelsNewL;
-			forPrint = "h16x16o dither selected";
-		}
+	string artARGHor = "3x0";
+	string artARGVer = "0x3";
 
+	// Output Cyan Dithered Image
+	if (noise == 1) {
+		inputCyan.addNoise(GaussianNoise, 0.07);
+		cout << "Adding grain\n";
 	}
 	else {
-		if (randomNumberFour <= 1) {
-			ditherSize = "h8x8o";
-			cropThis = cropChannelsNew;
-			forPrint = "h8x8o dither selected";
+		cout << "No grain added\n";
+	}
+	inputCyan.modulate(100, 0, 100);
+	case_One(inputCyan, inputMagenta, inputYellow, inputBlack, anglesNum[0], anglesNum[1], anglesNum[2], anglesNum[3], ditherSize, cropChannelsNew, solidPercent, randomNumber);
+	inputCyan.artifact("compose:args", artARGHor);
+	inputCyan.composite(noiseForDisplaceCyan, 0, 0, DisplaceCompositeOp);
+	inputCyan.artifact("compose:args", artARGVer);
+	inputCyan.composite(noiseForDisplaceCyan, 0, 0, DisplaceCompositeOp);
+	//inputCyan.write("_cyan.png");
+
+	// Output Magenta Dithered Image
+	if (noise == 1) {
+		inputMagenta.addNoise(GaussianNoise, 0.07);
+	}
+	inputMagenta.modulate(100, 0, 100);
+	inputMagenta.artifact("compose:args", artARGHor);
+	inputMagenta.composite(noiseForDisplaceMagenta, 0, 0, DisplaceCompositeOp);
+	inputMagenta.artifact("compose:args", artARGVer);
+	inputMagenta.composite(noiseForDisplaceMagenta, 0, 0, DisplaceCompositeOp);
+	//inputMagenta.write("_Magenta.png");
+
+	// Output Yellow Dithered Image
+	if (noise == 1) {
+		inputYellow.addNoise(GaussianNoise, 0.05);
+	}
+	inputYellow.modulate(100, 0, 100);
+	inputYellow.artifact("compose:args", artARGHor);
+	inputYellow.composite(noiseForDisplaceYellow, 0, 0, DisplaceCompositeOp);
+	inputYellow.artifact("compose:args", artARGVer);
+	inputYellow.composite(noiseForDisplaceYellow, 0, 0, DisplaceCompositeOp);
+	//inputYellow.write("_Yellow.png");
+
+	Black_solid_dithered(randomNumber, solidPercent, blackLines, inputReScale, poLarge, noiseSize, solidBlackImage, inputBlack, noiseForDisplaceBlack);
+
+	// Output Combined Channels to single Colour Image
+	std::vector<Image> imageList;
+	imageList.push_back(inputCyan);
+	imageList.push_back(inputMagenta);
+	imageList.push_back(inputYellow);
+	imageList.push_back(inputBlack);
+
+	Image rComposite;
+	Magick::combineImages(&rComposite, imageList.begin(), imageList.end(), AllChannels, CMYKColorspace);
+
+	Jpeg_compression(noise, randomNumber, poJPG, inFileEXT, randomQuant, rComposite, randomFinalBlur, noiseSize, solidPercent, solidBlackImage, finalGrain, qJpeg, outFile);
+}
+
+void Jpeg_compression(int noise, int randomNumber, int poJPG, std::string& inFileEXT, int randomQuant, Magick::Image& rComposite, double randomFinalBlur, std::string& noiseSize, float solidPercent, Magick::Image& solidBlackImage, double finalGrain, int qJpeg, std::string& outFile)
+{
+	if (randomNumber <= poJPG) {
+		cout << inFileEXT << endl << "Quantized: " << randomQuant << endl << "and compressed " << endl;
+		rComposite.blur(0, randomFinalBlur);
+		rComposite.filterType(CubicFilter);
+		rComposite.resize(noiseSize);
+		rComposite.colorSpace(sRGBColorspace);
+
+		if (randomNumber <= solidPercent) {
+			rComposite.alpha(false);
+			rComposite.composite(solidBlackImage, 0, 0, OverCompositeOp);
 		}
 		else {
-			ditherSize = "c7x7w";
-			cropThis = cropChannelsNew;
-			forPrint = "c7x7w dither selected";
+
 		}
 
+		if (noise == 1) {
+			rComposite.addNoise(LaplacianNoise, finalGrain);
+		}
+		rComposite.quantizeDither(false);
+		rComposite.quantizeColors(randomQuant);
+		rComposite.quantize(true);
+		rComposite.defineValue("JPEG", "sampling-factor", samplesYo());
+		rComposite.quality(qJpeg);
+		rComposite.magick("JPEG");
+		rComposite.write(outFile);
+	}
+	else {
+		rComposite.gaussianBlur(0, randomFinalBlur);
+		rComposite.filterType(MitchellFilter);
+		rComposite.resize(noiseSize);
+		rComposite.colorSpace(sRGBColorspace);
+
+		if (randomNumber <= solidPercent) {
+			rComposite.alpha(false);
+			rComposite.composite(solidBlackImage, 0, 0, OverCompositeOp);
+		}
+		else {
+
+		}
+		if (noise == 1) {
+			rComposite.addNoise(LaplacianNoise, finalGrain);
+		}
+		rComposite.write(outFile);
+	}
+}
+
+void Black_solid_dithered(int randomNumber, float solidPercent, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& inputBlack, Magick::Image& noiseForDisplaceBlack)
+{
+	string artARGHor = "2x0";
+	string artARGVer = "0x2";
+	// Output Black Dithered/solid Image
+	if (randomNumber <= solidPercent) {
+		
+
+		// Get black channel and find the edges
+		blackLines = inputReScale;
+		blackLines.channel(BlackChannel);
+		blackLines.sharpen(0.6, 1.0);
+		blackLines.morphology(ConvolveMorphology, DoGKernel, "6,1,4");
+
+		if (randomNumber <= poLarge) {
+			blackLines.morphology(DilateMorphology, DiamondKernel, "1x3");
+		}
+		else {
+			blackLines.morphology(ErodeMorphology, DiamondKernel, "1x2");
+		}
+
+		blackLines.colorSpace(GRAYColorspace);
+		blackLines.linearStretch(QuantumRange, QuantumRange);
+		blackLines.resize(noiseSize);
+		solidBlackImage.composite(blackLines, 0, 0, CopyAlphaCompositeOp);
+		solidBlackImage.colorSpace(sRGBColorspace);
+
+		inputBlack.modulate(100, 0, 100);
+		inputBlack.artifact("compose:args", artARGHor);
+		inputBlack.composite(noiseForDisplaceBlack, 0, 0, DisplaceCompositeOp);
+		inputBlack.artifact("compose:args", artARGVer);
+		inputBlack.composite(noiseForDisplaceBlack, 0, 0, DisplaceCompositeOp);
+	}
+	else {
+
+		inputBlack.modulate(100, 0, 100);
+		inputBlack.level(0, QuantumRange, 0.75);
+		inputBlack.artifact("compose:args", artARGHor);
+		inputBlack.composite(noiseForDisplaceBlack, 0, 0, DisplaceCompositeOp);
+		inputBlack.artifact("compose:args", artARGVer);
+		inputBlack.composite(noiseForDisplaceBlack, 0, 0, DisplaceCompositeOp);
+	}
+}
+
+void dotsFunc(int DPI, int& dotsOfHalftone)
+{
+	switch (DPI) {
+	case 0:
+		dotsOfHalftone = whichDotsYo();
+		break;
+	case 1:
+		dotsOfHalftone = 1;
+		break;
+	case 2:
+		dotsOfHalftone = 2;
+		break;
+	case 3:
+		dotsOfHalftone = 3;
+		break;
 	}
 }
 
@@ -545,6 +612,9 @@ void anglesFunc(int angle, int& angle_of_halftone)
 	case 4:
 		angle_of_halftone = 4;
 		break;
+	case 5:
+		angle_of_halftone = 5;
+		break;
 	}
 }
 
@@ -561,7 +631,6 @@ void case_One(Image& inputCyan, Image& inputMagenta, Image& inputYellow, Image& 
 	double blackArgsFirst[2] = { b,1 };
 	double blackArgsSecond[2] = { -b,1 };
 
-	//cout << "Dither type: " << ditherTypeThingy << endl;
 
 	// Cyan
 	inputCyan.distort(ScaleRotateTranslateDistortion, 1, cyanArgsFirst, Magick::MagickTrue);
@@ -591,6 +660,5 @@ void case_One(Image& inputCyan, Image& inputMagenta, Image& inputYellow, Image& 
 		inputBlack.distort(ScaleRotateTranslateDistortion, 1, blackArgsSecond, Magick::MagickTrue);
 		inputBlack.crop(croppingThing);
 	}
-
 }
 
