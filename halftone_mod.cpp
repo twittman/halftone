@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 		("a,angle", "Angle of Halftone Dots 1 - 5, 0 for random", cxxopts::value<int>()->default_value("0"))
 		("j,jpeg", "Percentage of Jpeg", cxxopts::value<float>()->default_value("0.05"))
 		("s,solid", "Do you want the outlines to be solid?", cxxopts::value<float>()->default_value("0.5"))
-		("g,DPI", "DPI, 1 = 250 DPI, 2 = 300 DPI, 3 = 600 DPI, 4 = 900 DPI, 5 = 1200 DPI, 6 = 4800 DPI, 0 = Random", cxxopts::value<int>()->default_value("1"))
+		("g,DPI", "DPI, 1 = 250 DPI, 2 = 300 DPI, 3 = 600 DPI, 4 = 900 DPI, 5 = 1200 DPI, 6 = 2400 DPI, 7 = 4800 DPI, 0 = Random", cxxopts::value<int>()->default_value("1"))
 		("b,angles", "print angles")
 		("h,help", "print help")
 		;
@@ -255,8 +255,11 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 			uniform_int_distribution<int> dpiScale_05(200, 220);
 			int twelve_Hundred_Scaler = dpiScale_05(randomNumberGen01);
 
-			uniform_int_distribution<int> dpiScale_06( 170, 180 );
-			int fortyEight_Hundred_Scaler = dpiScale_06( randomNumberGen01 );
+			uniform_int_distribution<int> dpiScale_06(181, 186);
+			int twentyFour_Hundred_Scaler = dpiScale_06(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_07( 162, 178 );
+			int fortyEight_Hundred_Scaler = dpiScale_07( randomNumberGen01 );
 
 
 
@@ -274,7 +277,7 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 			uniform_int_distribution<int> four_angle(32, 37);
 			int angle_fourth = four_angle(randomNumberGen01);
 
-			uniform_int_distribution<int> DPIr(1, 6);
+			uniform_int_distribution<int> DPIr(1, 7);
 			int randomDPI = DPIr(randomNumberGen01);
 
 			vector<int> anglesLaser;
@@ -314,6 +317,10 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 					dotsOfHalftone = DPI; break;
 				case 5:
 					dotsOfHalftone = DPI; break;
+				case 6:
+					dotsOfHalftone = DPI; break;
+				case 7:
+					dotsOfHalftone = DPI; break;
 				}
 
 				switch (dotsOfHalftone)
@@ -349,6 +356,12 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 					cout << "Halftone Dot Pattern: h16x16o " << endl;
 					break;
 				case 6:
+					dotsNum = "c21x21w";
+					DPI_scaler = twentyFour_Hundred_Scaler;
+					cout << "\nDPI 2400 " << "\n";
+					cout << "Halftone Dot Pattern: c21x21w " << endl;
+					break;
+				case 7:
 					dotsNum = "c21x21w";
 					DPI_scaler = fortyEight_Hundred_Scaler;
 					cout << "\nDPI 4800 " << "\n";
