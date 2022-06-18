@@ -42,6 +42,8 @@ string samplesYo()
 	return samplesList[rand() % 6];
 }
 
+
+
 double magentaArgsFirst[2];
 double magentaArgsSecond[2];
 double blackArgsFirst[2];
@@ -88,7 +90,7 @@ int main(int argc, char** argv)
 		("a,angle", "Angle of Halftone Dots 1 - 5, 0 for random", cxxopts::value<int>()->default_value("0"))
 		("j,jpeg", "Percentage of Jpeg", cxxopts::value<float>()->default_value("0.05"))
 		("s,solid", "Do you want the outlines to be solid?", cxxopts::value<float>()->default_value("0.5"))
-		("g,DPI", "DPI, 1 = 600 DPI, 2 = 900 DPI, 3 = 1200 DPI, 4 = 4800 DPI", cxxopts::value<int>()->default_value("1"))
+		("g,DPI", "DPI, 1 = 250 DPI, 2 = 300 DPI, 3 = 600 DPI, 4 = 900 DPI, 5 = 1200 DPI, 6 = 4800 DPI, 0 = Random", cxxopts::value<int>()->default_value("1"))
 		("b,angles", "print angles")
 		("h,help", "print help")
 		;
@@ -220,17 +222,43 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 			uniform_real_distribution<double> sequence03(finalGrainMin, finalGrainMax);
 			double finalGrain = sequence03(randomNumberGen01);
 
-			uniform_int_distribution<int> dpiScale_01(127, 137);
-			int six_Hundred_Scaler = dpiScale_01(randomNumberGen01);
+			//uniform_int_distribution<int> dpiScale_01(127, 137);
+			//int six_Hundred_Scaler = dpiScale_01(randomNumberGen01);
 
-			uniform_int_distribution<int> dpiScale_02(145, 155);
-			int nine_Hundred_Scaler = dpiScale_02(randomNumberGen01);
+			//uniform_int_distribution<int> dpiScale_02(145, 155);
+			//int nine_Hundred_Scaler = dpiScale_02(randomNumberGen01);
 
-			uniform_int_distribution<int> dpiScale_03(200, 220);
-			int twelve_Hundred_Scaler = dpiScale_03(randomNumberGen01);
+			//uniform_int_distribution<int> dpiScale_03(200, 220);
+			//int twelve_Hundred_Scaler = dpiScale_03(randomNumberGen01);
 
-			uniform_int_distribution<int> dpiScale_04( 170, 180 );
-			int fortyEight_Hundred_Scaler = dpiScale_04( randomNumberGen01 );
+			//uniform_int_distribution<int> dpiScale_04(170, 180);
+			//int fortyEight_Hundred_Scaler = dpiScale_04(randomNumberGen01);
+
+
+			///////////////////////////////////////////////////////////////
+			///							DPI SCALE						///
+			///////////////////////////////////////////////////////////////
+			int scalerOffset = 0;
+
+			uniform_int_distribution<int> dpiScale_01(105, 107);
+			int two_Hundred_Fifty_Scaler = dpiScale_01(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_02(108, 113);
+			int three_Hundred_Scaler = dpiScale_02(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_03(107, 113);
+			int six_Hundred_Scaler = dpiScale_03(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_04(145, 155);
+			int nine_Hundred_Scaler = dpiScale_04(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_05(200, 220);
+			int twelve_Hundred_Scaler = dpiScale_05(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_06( 170, 180 );
+			int fortyEight_Hundred_Scaler = dpiScale_06( randomNumberGen01 );
+
+
 
 
 			/// RANDOMISED LASERSCHWERT ANGLES BY 10% ///
@@ -245,6 +273,9 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 
 			uniform_int_distribution<int> four_angle(32, 37);
 			int angle_fourth = four_angle(randomNumberGen01);
+
+			uniform_int_distribution<int> DPIr(1, 6);
+			int randomDPI = DPIr(randomNumberGen01);
 
 			vector<int> anglesLaser;
 			anglesLaser.push_back(angle_first);
@@ -265,30 +296,63 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 
 				auto DPI_scaler = 0;
 
-				int dotsOfHalftone = DPI;
-				dotsFunc(DPI, dotsOfHalftone);
+				int dotsOfHalftone = 0;
+				int dotsChooser = DPI;
+				//dotsFunc(DPI, dotsOfHalftone);
 				string dotsNum;
+
+				switch (dotsChooser) {
+				case 0:
+					dotsOfHalftone = randomDPI; break;
+				case 1:
+					dotsOfHalftone = DPI; break;
+				case 2:
+					dotsOfHalftone = DPI; break;
+				case 3:
+					dotsOfHalftone = DPI; break;
+				case 4:
+					dotsOfHalftone = DPI; break;
+				case 5:
+					dotsOfHalftone = DPI; break;
+				}
+
 				switch (dotsOfHalftone)
 				{
 				case 1:
 					dotsNum = "c5x5w";
-					DPI_scaler = six_Hundred_Scaler;
-					cout << "\nHalftone Dot Pattern: c5x5w " << endl;
+					DPI_scaler = two_Hundred_Fifty_Scaler;
+					cout << "\nDPI 250 " << "\n";
+					cout << "Halftone Dot Pattern: c5x5w " << endl;
 					break;
 				case 2:
-					dotsNum = "h8x8o";
-					DPI_scaler = nine_Hundred_Scaler;
-					cout << "\nHalftone Dot Pattern: h8x8o " << endl;
+					dotsNum = "c5x5w";
+					DPI_scaler = three_Hundred_Scaler;
+					cout << "\nDPI 300 " << "\n";
+					cout << "Halftone Dot Pattern: c5x5w " << endl;
 					break;
 				case 3:
-					dotsNum = "h16x16o";
-					DPI_scaler = twelve_Hundred_Scaler;
-					cout << "\nHalftone Dot Pattern: h16x16o " << endl;
+					dotsNum = "c6x6w";
+					DPI_scaler = six_Hundred_Scaler;
+					cout << "\nDPI 600 " << "\n";
+					cout << "Halftone Dot Pattern: c6x6w " << endl;
 					break;
 				case 4:
+					dotsNum = "h8x8o";
+					DPI_scaler = nine_Hundred_Scaler;
+					cout << "\nDPI 900 " << "\n";
+					cout << "Halftone Dot Pattern: h8x8o " << endl;
+					break;
+				case 5:
+					dotsNum = "h16x16o";
+					DPI_scaler = twelve_Hundred_Scaler;
+					cout << "\nDPI 1200 " << "\n";
+					cout << "Halftone Dot Pattern: h16x16o " << endl;
+					break;
+				case 6:
 					dotsNum = "c21x21w";
 					DPI_scaler = fortyEight_Hundred_Scaler;
-					cout << "\nHalftone Dot Pattern: c21x21w " << endl;
+					cout << "\nDPI 4800 " << "\n";
+					cout << "Halftone Dot Pattern: c21x21w " << endl;
 					break;
 				}
 				
