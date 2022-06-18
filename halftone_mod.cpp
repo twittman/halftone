@@ -58,8 +58,8 @@ void case_One(Image& inputCyan, Image& inputMagenta, Image& inputBlack, Image& i
 	string& ditherTypeThingy, string& croppingThing, float& solidPercent, int& randomNumber);
 void dotsFunc(int DPI, int& dotsOfHalftone);
 void Black_solid_dithered(int randomNumber, float solidPercent, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& inputBlack, Magick::Image& noiseForDisplaceBlack);
-void Jpeg_compression(int noise, int randomNumber, int poJPG, std::string& inFileEXT, int randomQuant, Magick::Image& rComposite, double randomFinalBlur, std::string& noiseSize, float solidPercent, Magick::Image& solidBlackImage, double finalGrain, int qJpeg, std::string& outFile);
-void Dither_and_combine_channels(int noise, Magick::Image& inputCyan, Magick::Image& inputMagenta, Magick::Image& inputYellow, Magick::Image& inputBlack, std::vector<int>& anglesNum, std::string& ditherSize, std::string& cropChannelsNew, float& solidPercent, int& randomNumber, Magick::Image& noiseForDisplaceCyan, Magick::Image& noiseForDisplaceMagenta, Magick::Image& noiseForDisplaceYellow, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& noiseForDisplaceBlack, int poJPG, std::string& inFileEXT, int randomQuant, double randomFinalBlur, double finalGrain, int qJpeg, std::string& outFile);
+void Jpeg_compression(int noise, int randomNumber, int poJPG, std::string& inFileEXT, int randomQuant, Magick::Image& rComposite, double randomFinalBlur, std::string& noiseSize, float solidPercent, Magick::Image& solidBlackImage, double finalGrain, int qJpeg, std::string& outFile, int DPIsmall, int somerandomnumber);
+void Dither_and_combine_channels(int noise, Magick::Image& inputCyan, Magick::Image& inputMagenta, Magick::Image& inputYellow, Magick::Image& inputBlack, std::vector<int>& anglesNum, std::string& ditherSize, std::string& cropChannelsNew, float& solidPercent, int& randomNumber, Magick::Image& noiseForDisplaceCyan, Magick::Image& noiseForDisplaceMagenta, Magick::Image& noiseForDisplaceYellow, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& noiseForDisplaceBlack, int poJPG, std::string& inFileEXT, int randomQuant, double randomFinalBlur, double finalGrain, int qJpeg, std::string& outFile, int DPIsmall, int somerandomnumber);
 void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::filesystem::path& outputDir, const int& quantMin, const int& quantMax, const int& qMin, const int& qMax, char** argv, int DPI, int angle, float& solidPercent, float poLarge, int poJPG);
 //void min_max_DPI(int DPI, double& maxDPI, double& minDPI, double& maxNumc6x6w, double& minNumc6x6w, double& maxNumMultiplier, int& dotsOfHalftone);
 void anglesFunc(int angle, int& angle_of_halftone);
@@ -240,10 +240,13 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 			///////////////////////////////////////////////////////////////
 			int scalerOffset = 0;
 
-			uniform_int_distribution<int> dpiScale_01(105, 107);
+			//uniform_int_distribution<int> dpiScale_01(105, 107);
+			//int two_Hundred_Fifty_Scaler = dpiScale_01(randomNumberGen01);
+
+			uniform_int_distribution<int> dpiScale_01(238, 253);
 			int two_Hundred_Fifty_Scaler = dpiScale_01(randomNumberGen01);
 
-			uniform_int_distribution<int> dpiScale_02(108, 113);
+			uniform_int_distribution<int> dpiScale_02(212, 218);
 			int three_Hundred_Scaler = dpiScale_02(randomNumberGen01);
 
 			uniform_int_distribution<int> dpiScale_03(107, 113);
@@ -280,6 +283,9 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 			uniform_int_distribution<int> DPIr(1, 7);
 			int randomDPI = DPIr(randomNumberGen01);
 
+			uniform_int_distribution<int> srn(0, 3);
+			int somerandomnumber = srn(randomNumberGen01);
+
 			vector<int> anglesLaser;
 			anglesLaser.push_back(angle_first);
 			anglesLaser.push_back(angle_second);
@@ -298,6 +304,9 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 				size_t height = inputReScale.baseRows();
 
 				auto DPI_scaler = 0;
+
+
+				int DPIsmall;
 
 				int dotsOfHalftone = 0;
 				int dotsChooser = DPI;
@@ -326,44 +335,51 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 				switch (dotsOfHalftone)
 				{
 				case 1:
-					dotsNum = "c5x5w";
+					dotsNum = "h6x6o";
 					DPI_scaler = two_Hundred_Fifty_Scaler;
+					DPIsmall = 1;
 					cout << "\nDPI 250 " << "\n";
-					cout << "Halftone Dot Pattern: c5x5w " << endl;
+					cout << "Halftone Dot Pattern: h6x6o " << endl;
 					break;
 				case 2:
-					dotsNum = "c5x5w";
+					dotsNum = "h6x6o";
 					DPI_scaler = three_Hundred_Scaler;
+					DPIsmall = 1;
 					cout << "\nDPI 300 " << "\n";
-					cout << "Halftone Dot Pattern: c5x5w " << endl;
+					cout << "Halftone Dot Pattern: h6x6o " << endl;
 					break;
 				case 3:
 					dotsNum = "c6x6w";
 					DPI_scaler = six_Hundred_Scaler;
+					DPIsmall = 0;
 					cout << "\nDPI 600 " << "\n";
 					cout << "Halftone Dot Pattern: c6x6w " << endl;
 					break;
 				case 4:
 					dotsNum = "h8x8o";
 					DPI_scaler = nine_Hundred_Scaler;
+					DPIsmall = 0;
 					cout << "\nDPI 900 " << "\n";
 					cout << "Halftone Dot Pattern: h8x8o " << endl;
 					break;
 				case 5:
 					dotsNum = "h16x16o";
 					DPI_scaler = twelve_Hundred_Scaler;
+					DPIsmall = 0;
 					cout << "\nDPI 1200 " << "\n";
 					cout << "Halftone Dot Pattern: h16x16o " << endl;
 					break;
 				case 6:
 					dotsNum = "c21x21w";
 					DPI_scaler = twentyFour_Hundred_Scaler;
+					DPIsmall = 0;
 					cout << "\nDPI 2400 " << "\n";
 					cout << "Halftone Dot Pattern: c21x21w " << endl;
 					break;
 				case 7:
 					dotsNum = "c21x21w";
 					DPI_scaler = fortyEight_Hundred_Scaler;
+					DPIsmall = 0;
 					cout << "\nDPI 4800 " << "\n";
 					cout << "Halftone Dot Pattern: c21x21w " << endl;
 					break;
@@ -485,7 +501,7 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 
 
 				auto t1 = std::chrono::high_resolution_clock::now();
-				Dither_and_combine_channels(noise, inputCyan, inputMagenta, inputYellow, inputBlack, anglesNum, ditherSize, cropChannelsNew, solidPercent, randomNumber, noiseForDisplaceCyan, noiseForDisplaceMagenta, noiseForDisplaceYellow, blackLines, inputReScale, poLarge, noiseSize, solidBlackImage, noiseForDisplaceBlack, poJPG, inFileEXT, randomQuant, randomFinalBlur, finalGrain, qJpeg, outFile);
+				Dither_and_combine_channels(noise, inputCyan, inputMagenta, inputYellow, inputBlack, anglesNum, ditherSize, cropChannelsNew, solidPercent, randomNumber, noiseForDisplaceCyan, noiseForDisplaceMagenta, noiseForDisplaceYellow, blackLines, inputReScale, poLarge, noiseSize, solidBlackImage, noiseForDisplaceBlack, poJPG, inFileEXT, randomQuant, randomFinalBlur, finalGrain, qJpeg, outFile, DPIsmall, somerandomnumber);
 				auto t2 = std::chrono::high_resolution_clock::now();
 
 				auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
@@ -503,7 +519,7 @@ void Halftone_Function_Main(int noise, std::filesystem::path& inputDir, std::fil
 	}
 }
 
-void Dither_and_combine_channels(int noise, Magick::Image& inputCyan, Magick::Image& inputMagenta, Magick::Image& inputYellow, Magick::Image& inputBlack, std::vector<int>& anglesNum, std::string& ditherSize, std::string& cropChannelsNew, float& solidPercent, int& randomNumber, Magick::Image& noiseForDisplaceCyan, Magick::Image& noiseForDisplaceMagenta, Magick::Image& noiseForDisplaceYellow, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& noiseForDisplaceBlack, int poJPG, std::string& inFileEXT, int randomQuant, double randomFinalBlur, double finalGrain, int qJpeg, std::string& outFile)
+void Dither_and_combine_channels(int noise, Magick::Image& inputCyan, Magick::Image& inputMagenta, Magick::Image& inputYellow, Magick::Image& inputBlack, std::vector<int>& anglesNum, std::string& ditherSize, std::string& cropChannelsNew, float& solidPercent, int& randomNumber, Magick::Image& noiseForDisplaceCyan, Magick::Image& noiseForDisplaceMagenta, Magick::Image& noiseForDisplaceYellow, Magick::Image& blackLines, Magick::Image& inputReScale, float poLarge, std::string& noiseSize, Magick::Image& solidBlackImage, Magick::Image& noiseForDisplaceBlack, int poJPG, std::string& inFileEXT, int randomQuant, double randomFinalBlur, double finalGrain, int qJpeg, std::string& outFile, int DPIsmall, int somerandomnumber)
 {
 	string artARGHor = "3x0";
 	string artARGVer = "0x3";
@@ -558,15 +574,28 @@ void Dither_and_combine_channels(int noise, Magick::Image& inputCyan, Magick::Im
 	Image rComposite;
 	Magick::combineImages(&rComposite, imageList.begin(), imageList.end(), AllChannels, CMYKColorspace);
 
-	Jpeg_compression(noise, randomNumber, poJPG, inFileEXT, randomQuant, rComposite, randomFinalBlur, noiseSize, solidPercent, solidBlackImage, finalGrain, qJpeg, outFile);
+	Jpeg_compression(noise, randomNumber, poJPG, inFileEXT, randomQuant, rComposite, randomFinalBlur, noiseSize, solidPercent, solidBlackImage, finalGrain, qJpeg, outFile, DPIsmall, somerandomnumber);
 }
 
-void Jpeg_compression(int noise, int randomNumber, int poJPG, std::string& inFileEXT, int randomQuant, Magick::Image& rComposite, double randomFinalBlur, std::string& noiseSize, float solidPercent, Magick::Image& solidBlackImage, double finalGrain, int qJpeg, std::string& outFile)
+void Jpeg_compression(int noise, int randomNumber, int poJPG, std::string& inFileEXT, int randomQuant, Magick::Image& rComposite, double randomFinalBlur, std::string& noiseSize, float solidPercent, Magick::Image& solidBlackImage, double finalGrain, int qJpeg, std::string& outFile, int DPIsmall, int somerandomnumber)
 {
 	if (randomNumber <= poJPG) {
 		cout << inFileEXT << endl << "Quantized: " << randomQuant << endl << "and compressed " << endl;
-		rComposite.blur(0, randomFinalBlur);
-		rComposite.filterType(CubicFilter);
+		//rComposite.blur(0, randomFinalBlur);
+		//rComposite.filterType(CubicFilter);
+		if (DPIsmall != 1) {
+			rComposite.blur(0, randomFinalBlur);
+			rComposite.filterType(CubicFilter);
+		}
+		else if (DPIsmall == 1) {
+			if (somerandomnumber == 1) {
+				rComposite.filterType(BoxFilter);
+			}
+			else {
+				rComposite.filterType(PointFilter);
+			}
+		}
+		
 		rComposite.resize(noiseSize);
 		rComposite.colorSpace(sRGBColorspace);
 
@@ -590,8 +619,15 @@ void Jpeg_compression(int noise, int randomNumber, int poJPG, std::string& inFil
 		rComposite.write(outFile);
 	}
 	else {
-		rComposite.gaussianBlur(0, randomFinalBlur);
-		rComposite.filterType(MitchellFilter);
+		//rComposite.gaussianBlur(0, randomFinalBlur);
+		//rComposite.filterType(MitchellFilter);
+		if (DPIsmall != 1) {
+			rComposite.gaussianBlur(0, randomFinalBlur);
+			rComposite.filterType(MitchellFilter);
+		}
+		else if (DPIsmall == 1) {
+			rComposite.filterType(BoxFilter);
+		}
 		rComposite.resize(noiseSize);
 		rComposite.colorSpace(sRGBColorspace);
 
